@@ -1,4 +1,6 @@
-= rosa-quick-start
+= Rosa Quick Start
+
+Following are the steps to deploy Rosa Cluster. 
 
 == Prerequisites
 
