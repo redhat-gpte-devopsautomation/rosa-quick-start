@@ -1,5 +1,7 @@
 ---
 
+# GUID is unique Alpha digis
+guid: CHANGEME
 
 # ROSA Cluster Name
 rosa_cluster_name: "rosa-{{ guid }}"
