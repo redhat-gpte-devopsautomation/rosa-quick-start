@@ -1,5 +1,11 @@
 = rosa-quick-start
 
+== Prerequisites
+
+. RHEL8.x
+. Repository to install packages
+. python3.6 is required
+
 == Prepare your workstation
 
 . Install required packages.
@@ -59,9 +65,18 @@ vim secrets.yml
 vim vars.yml
 ----
 
-== Prerequisites
-python3.6
+== Run rosa-quick-start playbook
 
+. Execute ansible playbook.
++
+[source,txt]
+----
+ansible-playbook playbook.yml \
+  -e @vars.yml \
+  -e @secrets.yml
+----
 
-ansible-playbook playbook.yml -e guid=mbmrp -e @vars.yml -e @secrets.yml
+== Login Details
+
+. Rosa Cluster login credentials can be found in cat ~/.config/ocm/login_creds 
 
