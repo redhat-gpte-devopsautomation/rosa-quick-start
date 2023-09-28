@@ -1,14 +1,67 @@
 = rosa-quick-start
 
-== Prerequisites
-python3.6
+== Prepare your workstation
+
+. Install required packages.
++
+[source,txt]
+----
 sudo yum install -y git gcc python3-devel
-git clone https://github.com/redhat-gpte-devopsautomation/rosa-quick-start.git
-cd rosa-quick-start
 sudo ln -s /usr/bin/python3 /usr/bin/python
+----
+
+. Clone rosa-quick-start repository.
++
+[source,txt]
+----
+cd $HOME
+git clone https://github.com/redhat-gpte-devopsautomation/rosa-quick-start.git
+----
+
+. Create python virtual environment.
++
+[source,txt]
+----
+cd rosa-quick-start
 python3 -m venv ~/virtualevns/rosa
+----
+
+. Install python library in the virtual environment.
++
+[source,txt]
+----
 source ~/virtualevns/rosa/bin/activate
 pip install -r requirements.txt
+----
+
+. Install ansible roles and collections in default path.
++
+[source,txt]
+----
+ansible-galaxy collection install -r requirements.yml
+----
+
+== Prepare secrets variables file
+
+. Update and replace CHANGME value.
++
+[source,txt]
+----
+vim secrets.yml
+----
+
+== Prepare variables file
+
+. Update and replace CHANGME value.
++
+[source,txt]
+----
+vim vars.yml
+----
+
+== Prerequisites
+python3.6
+
 
 ansible-playbook playbook.yml -e guid=mbmrp -e @vars.yml -e @secrets.yml
 
