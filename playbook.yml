@@ -106,7 +106,6 @@
       retries: 5
       delay: 30
 
-
     - name: Wait 5 minutes for the ROSA installer to start
       ansible.builtin.pause:
         minutes: 5
@@ -132,52 +131,10 @@
       ansible.builtin.shell:
         cmd: >-
           /usr/local/bin/rosa create admin
-          --cluster={{ rosa_cluster_name }} |grep 'oc login' | awk '{print $7}'"
+          --cluster={{ rosa_cluster_name }} |grep 'oc login' | awk '{print $7}'
       register: _r_rosa_admin_result
 
-    - name: Create .config/ocm directory in rosa user homedir
-      ansible.builtin.file:
-        path: "~/.config/ocm"
-        state: directory
+    - name: Print Login info
+      ansible.builtin.debug:
+        msg: "{{ _r_rosa_admin_result }}"
 
-    # - name: Copy ROSA token to ec2 user dir
-    #   ansible.builtin.copy:
-    #     src: /home/ec2-user/.config/ocm/ocm.json
-    #     dest: "~/.config/ocm/ocm.json"
-    #     mode: '0600'
-    #     remote_src: true
-
-    # - name: Create .aws directory in rosa user homedir
-    #   ansible.builtin.file:
-    #     path: "~/.aws"
-    #     owner: "{{ bastion_user_name }}"
-    #     state: directory
-
-    # - name: Copy AWS credentials to rosa user dir
-    #   become: true
-    #   ansible.builtin.copy:
-    #     src: /home/ec2-user/.aws/credentials
-    #     dest: "~{{ bastion_user_name }}/.aws/credentials"
-    #     owner: "{{ bastion_user_name }}"
-    #     remote_src: true
-    # - name: Copy AWS config to rosa user dir
-    #   become: true
-    #   ansible.builtin.copy:
-    #     src: /home/ec2-user/.aws/config
-    #     dest: "~{{ bastion_user_name }}/.aws/config"
-    #     owner: "{{ bastion_user_name }}"
-    #     remote_src: true
-
-    # - when:
-    #     - _r_rosa_admin_result is defined
-    #     - _r_rosa_console_url is defined
-    #   block:
-    #     - name: Set ROSA token warning boolean true
-    #       when: rosa_token == gpte_rosa_token
-    #       set_fact:
-    #         rosa_token_warning: true
-
-    #     - name: Set ROSA token warning boolean false
-    #       when: rosa_token != gpte_rosa_token
-    #       set_fact:
-    #         rosa_token_warning: false
