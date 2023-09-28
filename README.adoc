@@ -101,5 +101,5 @@ cat ~/.config/ocm/login_creds
 +
 [source,txt]
 ----
-/usr/local/bin/rosa logs uninstall -c rosa-mbmrp --watch
+/usr/local/bin/rosa logs uninstall -c rosa-<CHANGEME> --watch
 ----
