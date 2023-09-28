@@ -8,191 +8,176 @@
     AWS_DEFAULT_REGION: "{{ aws_region }}"
 
   tasks:
-    - tags:
-        - install_studentvm_role
-      block:
-        - name: Run student role
-          when: studentvm_roles | default( "" ) | length > 0
-          include_role:
-            name: "{{ studentvm_role }}"
-          loop: "{{ studentvm_roles }}"
-          loop_control:
-            loop_var: studentvm_role
+    - name: Get awscli bundle
+      ansible.builtin.get_url:
+        url: https://s3.amazonaws.com/aws-cli/awscli-bundle-1.18.200.zip
+        dest: /tmp/awscli-bundle.zip
 
-    - tags:
-        - install_awscli
-      block:
-        - name: Get awscli bundle
-          get_url:
-            url: https://s3.amazonaws.com/aws-cli/awscli-bundle-1.18.200.zip
-            dest: /tmp/awscli-bundle.zip
-        - name: Unzip awscli-bundle.zip
-          unarchive:
-            src: /tmp/awscli-bundle.zip
-            dest: /tmp/
-            remote_src: true
-        - name: Install awscli
-          command: /tmp/awscli-bundle/install -i /usr/local/aws -b /bin/aws
-          args:
-            creates: /usr/local/aws
-          become: true
-        - name: cleanup archive and tmp files
-          file:
-            path: "{{ item }}"
-            state: absent
-          loop:
-            - /tmp/awscli-bundle
-            - /tmp/awscli-bundle.zip
+    - name: Unzip awscli-bundle.zip
+      ansible.builtin.unarchive:
+        src: /tmp/awscli-bundle.zip
+        dest: /tmp/
+        remote_src: true
 
-    - tags:
-        - create_aws_dir
-      block:
-        - name: Create .aws directory
-          file:
-            path: ~/.aws
-            state: directory
+    - name: Install awscli
+      become: true
+      ansible.builtin.command: 
+        cmd: /tmp/awscli-bundle/install -i /usr/local/aws -b /bin/aws
+      args:
+        creates: /usr/local/aws
 
-    - tags:
-        - create_aws_creds
-      block:
-        - name: Add aws credentials
-          blockinfile:
-            path: ~/.aws/credentials
-            create: true
-            mode: 0600
-            block: |-
-              [default]
-              aws_access_key_id={{ hostvars.localhost.rosa_access_key_id }}
-              aws_secret_access_key={{ hostvars.localhost.rosa_secret_access_key }}
+    - name: cleanup archive and tmp files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /tmp/awscli-bundle
+        - /tmp/awscli-bundle.zip
 
-    - tags:
-        - create_aws_config
-      block:
-        - name: Add aws config
-          blockinfile:
-            path: ~/.aws/config
-            create: true
-            mode: 0600
-            block: |-
-              [default]
-              region={{ aws_region }}
+    - name: Create .aws directory
+      ansible.builtin.file:
+        path: ~/.aws
+        state: directory
+        mode: 0755
 
-    - tags:
-        - install_rosacli
-      block:
-        - name: Get ROSA CLI
-          get_url:
-            url: "{{ rosa_installer_url }}"
-            dest: /tmp/rosa-linux.tar.gz
-        - name: Unzip rosa-linux.tar.gz
-          unarchive:
-            src: /tmp/rosa-linux.tar.gz
-            dest: /usr/local/bin/
-            remote_src: true
-          become: true
-        - name: cleanup archive file
-          file:
-            path: "{{ item }}"
-            state: absent
-          loop:
-            - /tmp/rosa-linux.tar.gz
+    - name: Add aws credentials
+      ansible.builtin.blockinfile:
+        path: ~/.aws/credentials
+        create: true
+        mode: 0600
+        block: |-
+          [default]
+          aws_access_key_id={{ aws_access_key_id }}
+          aws_secret_access_key={{ aws_secret_access_key }}
 
-    - tags:
-        - verify_rosa_installer
-      block:
-        - set_fact:
-            rosa_token: "{{ gpte_rosa_token }}"
-          when: rosa_token == ""
-        - name: Log into ROSA
-          command: "/usr/local/bin/rosa login --token {{ rosa_token }}"
-        - name: Init AWS account for ROSA
-          command: "/usr/local/bin/rosa init"
-        - name: Verify permissions for ROSA
-          command: "/usr/local/bin/rosa verify permissions"
-        - name: Verify quota for ROSA
-          command: "/usr/local/bin/rosa verify quota"
+    - name: Add aws config
+      ansible.builtin.blockinfile:
+        path: ~/.aws/config
+        create: true
+        mode: 0600
+        block: |-
+          [default]
+          region={{ aws_region }}
 
-    - tags:
-        - run_rosa_installer
-      block:
-        - name: Create ROSA Cluster
-          command: "/usr/local/bin/rosa create cluster --cluster-name={{ rosa_cluster_name }} --compute-machine-type={{ rosa_machine_type }} --compute-nodes={{ rosa_wroker_nodes }}"
-          register: _r_create_cluster
-          until: _r_create_cluster.rc == 0
-          retries: 5
-          delay: 30
 
-    - tags:
-        - wait_rosa_installer
-      block:
-        - name: Wait 5 minutes for the ROSA installer to start
-          pause:
-            minutes: 5
-        - name: Check for ROSA installer completion
-          shell: "/usr/local/bin/rosa describe cluster -c {{ rosa_cluster_name }} |grep ^State:|awk '{print $2}'"
-          register: rosa_installer_status
-          until: rosa_installer_status.stdout.find("ready") != -1
-          retries: 120
-          delay: 60
+    - name: Get ROSA CLI
+      ansible.builtin.get_url:
+        url: "{{ rosa_installer_url }}"
+        dest: /tmp/rosa-linux.tar.gz
 
-    - tags:
-        - get_rosa_console_url
-      block:
-        - name: Get ROSA Console URL
-          shell: "/usr/local/bin/rosa describe cluster -c {{ rosa_cluster_name }} |grep '^Console URL:'|awk '{print $3}'"
-          register: rosa_console_url
+    - name: Unzip rosa-linux.tar.gz
+      become: true
+      ansible.builtin.unarchive:
+        src: /tmp/rosa-linux.tar.gz
+        dest: /usr/local/bin/
+        remote_src: true
 
-    - tags:
-        - create_rosa_admin
-      block:
-        - name: Create ROSA admin user
-          shell: "/usr/local/bin/rosa create admin --cluster={{ rosa_cluster_name }} |grep 'oc login' | awk '{print $7}'"
-          register: rosa_admin_result
-        - name: Create .config/ocm directory in rosa user homedir
-          become: true
-          file:
-            path: "~{{ bastion_user_name }}/.config/ocm"
-            owner: "{{ bastion_user_name }}"
-            state: directory
-        - name: Copy ROSA token to ec2 user dir
-          become: true
-          ansible.builtin.copy:
-            src: /home/ec2-user/.config/ocm/ocm.json
-            dest: "~{{ bastion_user_name }}/.config/ocm/ocm.json"
-            owner: "{{ bastion_user_name }}"
-            mode: '0600'
-            remote_src: true
-        - name: Create .aws directory in rosa user homedir
-          become: true
-          file:
-            path: "~{{ bastion_user_name }}/.aws"
-            owner: "{{ bastion_user_name }}"
-            state: directory
-        - name: Copy AWS credentials to rosa user dir
-          become: true
-          ansible.builtin.copy:
-            src: /home/ec2-user/.aws/credentials
-            dest: "~{{ bastion_user_name }}/.aws/credentials"
-            owner: "{{ bastion_user_name }}"
-            remote_src: true
-        - name: Copy AWS config to rosa user dir
-          become: true
-          ansible.builtin.copy:
-            src: /home/ec2-user/.aws/config
-            dest: "~{{ bastion_user_name }}/.aws/config"
-            owner: "{{ bastion_user_name }}"
-            remote_src: true
+    - name: cleanup archive file
+      ansible.builtin.file:
+        path: "/tmp/rosa-linux.tar.gz"
+        state: absent
 
-    - when:
-        - rosa_admin_result is defined
-        - rosa_console_url is defined
-      block:
-        - name: Set ROSA token warning boolean true
-          when: rosa_token == gpte_rosa_token
-          set_fact:
-            rosa_token_warning: true
+    - name: Log into ROSA
+      ansible.builtin.command:
+        cmd: /usr/local/bin/rosa login --token {{ rosa_token }}
 
-        - name: Set ROSA token warning boolean false
-          when: rosa_token != gpte_rosa_token
-          set_fact:
-            rosa_token_warning: false
+    - name: Init AWS account for ROSA
+      ansible.builtin.command:
+        cmd: /usr/local/bin/rosa init
+
+    - name: Verify permissions for ROSA
+      ansible.builtin.command:
+        cmd: /usr/local/bin/rosa verify permissions
+
+    - name: Verify quota for ROSA
+      ansible.builtin.command:
+        cmd: /usr/local/bin/rosa verify quota
+
+
+    - name: Create ROSA Cluster
+      ansible.builtin.command:
+        cmd: >-
+          /usr/local/bin/rosa create cluster
+          --cluster-name={{ rosa_cluster_name }}
+          --compute-machine-type={{ rosa_machine_type }}
+          --compute-nodes={{ rosa_wroker_nodes }}
+      register: _r_create_cluster
+      until: _r_create_cluster.rc == 0
+      retries: 5
+      delay: 30
+
+
+    - name: Wait 5 minutes for the ROSA installer to start
+      ansible.builtin.pause:
+        minutes: 5
+
+    - name: Check for ROSA installer completion
+      ansible.builtin.shell:
+        cmd: >-
+          /usr/local/bin/rosa describe cluster 
+          -c {{ rosa_cluster_name }} | grep ^State:|awk '{print $2}'
+      register: _r_rosa_installer_status
+      until: _r_rosa_installer_status.stdout.find("ready") != -1
+      retries: 120
+      delay: 60
+
+    - name: Get ROSA Console URL
+      ansible.builtin.shell:
+        cmd: >-
+          /usr/local/bin/rosa describe cluster
+          -c {{ rosa_cluster_name }} |grep '^Console URL:'|awk '{print $3}'
+      register: _r_rosa_console_url
+
+    - name: Create ROSA admin user
+      ansible.builtin.shell:
+        cmd: >-
+          /usr/local/bin/rosa create admin
+          --cluster={{ rosa_cluster_name }} |grep 'oc login' | awk '{print $7}'"
+      register: _r_rosa_admin_result
+
+    - name: Create .config/ocm directory in rosa user homedir
+      ansible.builtin.file:
+        path: "~/.config/ocm"
+        state: directory
+
+    # - name: Copy ROSA token to ec2 user dir
+    #   ansible.builtin.copy:
+    #     src: /home/ec2-user/.config/ocm/ocm.json
+    #     dest: "~/.config/ocm/ocm.json"
+    #     mode: '0600'
+    #     remote_src: true
+
+    # - name: Create .aws directory in rosa user homedir
+    #   ansible.builtin.file:
+    #     path: "~/.aws"
+    #     owner: "{{ bastion_user_name }}"
+    #     state: directory
+
+    # - name: Copy AWS credentials to rosa user dir
+    #   become: true
+    #   ansible.builtin.copy:
+    #     src: /home/ec2-user/.aws/credentials
+    #     dest: "~{{ bastion_user_name }}/.aws/credentials"
+    #     owner: "{{ bastion_user_name }}"
+    #     remote_src: true
+    # - name: Copy AWS config to rosa user dir
+    #   become: true
+    #   ansible.builtin.copy:
+    #     src: /home/ec2-user/.aws/config
+    #     dest: "~{{ bastion_user_name }}/.aws/config"
+    #     owner: "{{ bastion_user_name }}"
+    #     remote_src: true
+
+    # - when:
+    #     - _r_rosa_admin_result is defined
+    #     - _r_rosa_console_url is defined
+    #   block:
+    #     - name: Set ROSA token warning boolean true
+    #       when: rosa_token == gpte_rosa_token
+    #       set_fact:
+    #         rosa_token_warning: true
+
+    #     - name: Set ROSA token warning boolean false
+    #       when: rosa_token != gpte_rosa_token
+    #       set_fact:
+    #         rosa_token_warning: false

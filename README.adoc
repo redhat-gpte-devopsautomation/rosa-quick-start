@@ -5,9 +5,10 @@ python3.6
 sudo yum install -y git gcc python3-devel
 git clone https://github.com/redhat-gpte-devopsautomation/rosa-quick-start.git
 cd rosa-quick-start
+sudo ln -s /usr/bin/python3 /usr/bin/python
 python3 -m venv ~/virtualevns/rosa
 source ~/virtualevns/rosa/bin/activate
 pip install -r requirements.txt
 
-ansible-playbook playbook.yml -e @vars.yml -e @secrets.yml
+ansible-playbook playbook.yml -e guid=mbmrp -e @vars.yml -e @secrets.yml
 
