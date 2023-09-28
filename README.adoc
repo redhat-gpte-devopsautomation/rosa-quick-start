@@ -1,0 +1,89 @@
+= Rosa Quick Start
+
+Following are the steps to deploy Rosa Cluster. 
+
+== Prerequisites
+
+. RHEL8.x
+. Repository to install packages
+. python3.6 is required
+
+== Prepare your workstation
+
+. Install required packages.
++
+[source,txt]
+----
+sudo yum install -y git gcc python3-devel
+sudo ln -s /usr/bin/python3 /usr/bin/python
+----
+
+. Clone rosa-quick-start repository.
++
+[source,txt]
+----
+cd $HOME
+git clone https://github.com/redhat-gpte-devopsautomation/rosa-quick-start.git
+----
+
+. Create python virtual environment.
++
+[source,txt]
+----
+cd rosa-quick-start
+python3 -m venv ~/virtualevns/rosa
+----
+
+. Install python library in the virtual environment.
++
+[source,txt]
+----
+source ~/virtualevns/rosa/bin/activate
+pip install -r requirements.txt
+----
+
+. Install ansible roles and collections in default path.
++
+[source,txt]
+----
+ansible-galaxy collection install -r requirements.yml
+----
+
+== Prepare secrets variables file
+
+. Update and replace CHANGME value.
++
+[source,txt]
+----
+vim secrets.yml
+----
+
+== Prepare variables file
+
+. Update and replace CHANGME value.
++
+[source,txt]
+----
+vim vars.yml
+----
+
+== Run rosa-quick-start playbook
+
+. Execute ansible playbook.
++
+[source,txt]
+----
+ansible-playbook playbook.yml \
+  -e @vars.yml \
+  -e @secrets.yml
+----
+
+== Login Details
+
+. Rosa Cluster login credentials can be found in cat ~/.config/ocm/login_creds 
+
++
+[source,txt]
+----
+cat ~/.config/ocm/login_creds
+----

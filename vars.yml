@@ -1,0 +1,20 @@
+---
+
+# GUID is unique Alpha digis
+guid: CHANGEME
+
+# ROSA Cluster Name
+rosa_cluster_name: "rosa-{{ guid }}"
+
+# ROSA worker node machine type recommended in the official documentatition
+rosa_machine_type: "m6a.2xlarge"
+
+# ROSA number of worker nodes recommended in the official documentatition
+rosa_wroker_nodes: 2
+
+# ROSA Version
+rosa_version: latest
+
+# Where to download the ROSA installer from
+rosa_installer_url: "https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/rosa/{{ rosa_version }}/rosa-linux.tar.gz"
+
