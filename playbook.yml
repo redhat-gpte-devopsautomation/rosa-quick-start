@@ -136,5 +136,15 @@
 
     - name: Print Login info
       ansible.builtin.debug:
-        msg: "{{ _r_rosa_admin_result }}"
+        msg: |
+          Rosa Cluster Console: {{ _r_rosa_console_url }}
+          Rosa Cluster Admin User: cluster-admin
+          Rosa Cluster Admin Password: {{ _r_rosa_admin_result }}
 
+    - name: Save login details
+      ansible.builtin.copy:
+        content: |
+          Rosa Cluster Console: {{ _r_rosa_console_url }}
+          Rosa Cluster Admin User: cluster-admin
+          Rosa Cluster Admin Password: {{ _r_rosa_admin_result }}
+        dest: "~/.config/ocm/login_creds"
