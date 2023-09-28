@@ -87,3 +87,19 @@ ansible-playbook playbook.yml \
 ----
 cat ~/.config/ocm/login_creds
 ----
+
+== [DON'T] Following are the additional steps to tear down the cluster
+
+. Run following command only when you want to delete/destroy the Rosa Cluster.
++
+[source,txt]
+----
+/usr/local/bin/rosa delete cluster --cluster rosa-<CHANGEME>
+----
+
+. You can run following command to watch the tear down logs
++
+[source,txt]
+----
+/usr/local/bin/rosa logs uninstall -c rosa-mbmrp --watch
+----
