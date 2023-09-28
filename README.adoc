@@ -1,0 +1,5 @@
+= rosa-quick-start
+
+== Prerequisites
+
+sudo dnf install -y  git

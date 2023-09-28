@@ -1,9 +1,12 @@
-- name: Step 00xxxxx software
-  hosts: bastions
+---
+- name: Setup Rosa cluster
+  hosts: localhost
+  connection: local
   gather_facts: false
   become: false
   environment:
     AWS_DEFAULT_REGION: "{{ aws_region }}"
+
   tasks:
     - tags:
         - install_studentvm_role

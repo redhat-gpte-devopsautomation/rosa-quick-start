@@ -1,1 +1,0 @@
-# rosa-quick-start
