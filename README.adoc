@@ -1,5 +1,13 @@
 = rosa-quick-start
 
 == Prerequisites
+python3.6
+sudo yum install -y git gcc python3-devel
+git clone https://github.com/redhat-gpte-devopsautomation/rosa-quick-start.git
+cd rosa-quick-start
+python3 -m venv ~/virtualevns/rosa
+source ~/virtualevns/rosa/bin/activate
+pip install -r requirements.txt
 
-sudo dnf install -y  git
+ansible-playbook playbook.yml -e @vars.yml -e @secrets.yml
+
