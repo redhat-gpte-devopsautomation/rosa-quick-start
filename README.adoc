@@ -1,4 +1,4 @@
-= Rosa Quick Start
+= ROSA Quick Start
 
 Following are the steps to deploy Rosa Cluster. 
 
