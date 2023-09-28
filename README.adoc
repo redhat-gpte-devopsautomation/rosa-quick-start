@@ -82,3 +82,8 @@ ansible-playbook playbook.yml \
 
 . Rosa Cluster login credentials can be found in cat ~/.config/ocm/login_creds 
 
++
+[source,txt]
+----
+cat ~/.config/ocm/login_creds
+----
